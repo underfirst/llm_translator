@@ -1,11 +1,10 @@
-# Fix the code below AI!
-import vllm
+from vllm import LLM
 
 
 def translate_en_to_ja(text: str) -> str:
-    client = vllm.LLM(
-        model="path/to/japanese-model"
-    )  # use Qwen/Qwen2.5-7B-Instruct AI!
+    client = LLM(
+        model="Qwen/Qwen2.5-7B-Instruct"
+    )
 
     prompt = f"Translate the following English text to Japanese:\n{text}"
     response = client.generate(prompt=prompt, max_tokens=100)
