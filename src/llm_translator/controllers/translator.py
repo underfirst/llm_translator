@@ -1,8 +1,10 @@
-import numpy as np
 import re
+
+import numpy as np
 from transformers import AutoTokenizer
 from vllm import LLM, SamplingParams
 
+# convert all the codes below to class and methods. AI!
 MODEL_NAME = "Qwen/Qwen2.5-7B-Instruct"
 MAX_LENGTH = 1000
 MAX_INPUT_LENGTH = round(MAX_LENGTH * 0.35)
@@ -47,16 +49,21 @@ def split_text(text: str) -> list[str]:
             if paragraph_length < MAX_INPUT_LENGTH:
                 paragraphs.append(paragraph)
             else:
-                # Split paragraph into sentences
-                sentences = re.split(r'(?<=[.!?]) +', paragraph)
+                sentences = re.split(
+                    r"(?<=[.!?]) +", paragraph
+                )  # use sentence splitter.
                 current_paragraph = ""
                 for sentence in sentences:
                     sentence_length = get_token_length(sentence)
-                    if get_token_length(current_paragraph + " " + sentence) <= MAX_INPUT_LENGTH:
+                    if (
+                        get_token_length(current_paragraph + " " + sentence)
+                        <= MAX_INPUT_LENGTH
+                    ):
                         current_paragraph = (current_paragraph + " " + sentence).strip()
                     else:
                         if current_paragraph:
                             paragraphs.append(current_paragraph)
+                        # TODO: raise if sentence length > MAX_INPUT_LENGTH.
                         current_paragraph = sentence
                 if current_paragraph:
                     paragraphs.append(current_paragraph)
