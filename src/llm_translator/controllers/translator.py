@@ -1,4 +1,5 @@
 import numpy as np
+import re
 from transformers import AutoTokenizer
 from vllm import LLM, SamplingParams
 
@@ -35,8 +36,6 @@ def check_max_token_length(text: str) -> int:
 
 def split_text(text: str) -> list[str]:
     max_paragraph_length = check_max_token_length(text)
-    if max_paragraph_length < MAX_INPUT_LENGTH:
-        max_paragraph_length = MAX_INPUT_LENGTH
 
     paragraphs = []
 
@@ -48,8 +47,19 @@ def split_text(text: str) -> list[str]:
             if paragraph_length < MAX_INPUT_LENGTH:
                 paragraphs.append(paragraph)
             else:
-                # TODO: split sentence to fullfill MAX_INPUT_LENGTH AI!
-                ...
+                # Split paragraph into sentences
+                sentences = re.split(r'(?<=[.!?]) +', paragraph)
+                current_paragraph = ""
+                for sentence in sentences:
+                    sentence_length = get_token_length(sentence)
+                    if get_token_length(current_paragraph + " " + sentence) <= MAX_INPUT_LENGTH:
+                        current_paragraph = (current_paragraph + " " + sentence).strip()
+                    else:
+                        if current_paragraph:
+                            paragraphs.append(current_paragraph)
+                        current_paragraph = sentence
+                if current_paragraph:
+                    paragraphs.append(current_paragraph)
 
     return paragraphs
 
