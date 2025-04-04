@@ -2,29 +2,27 @@ import mistune
 from transformers import AutoModelForSeq2SeqLM, AutoTokenizer
 
 
-# docstringはGoogle styleで書いてください. AI!
-# 句点は。ではなく.を使ってください AI!
-# 読点は、ではなく, (半角カンマスペース)を使ってください. AI!
-# num_contextはTranslator._get_paragraphsの引数のcontext_sizeではなく__init__ methodの引数として与えてください. AI!
 class Translator:
-    def __init__(self, model_name: str, max_context_length: int = 1000):
+    def __init__(self, model_name: str, max_context_length: int = 1000, num_context: int = 2):
         """
-        Translatorクラスのコンストラクタ。使用するLLMモデルの名前と最大コンテキスト長を設定する。
+        Translator class constructor. Sets the name of the LLM model to use and the maximum context length.
 
-        :param model_name: 使用するLLMモデルの名前。
-        :param max_context_length: 翻訳時に保持するコンテキストの最大文字数。
+        :param model_name: Name of the LLM model to use.
+        :param max_context_length: Maximum number of characters to maintain as context during translation.
+        :param num_context: Number of surrounding paragraphs to include as context for each translation request.
         """
         self.model_name = model_name
         self.max_context_length = max_context_length
+        self.num_context = num_context
         self.tokenizer = AutoTokenizer.from_pretrained(model_name)
         self.model = AutoModelForSeq2SeqLM.from_pretrained(model_name)
 
     def translate(self, text: str) -> str:
         """
-        Markdown形式のテキスト全体を翻訳するメインメソッド。テキストを段落ごとに分割し、各段落を翻訳する。
+        Main method to translate an entire Markdown-formatted text. Splits the text into paragraphs and translates each one.
 
-        :param text: 翻訳対象のMarkdown形式のテキスト。
-        :return: 翻訳後のMarkdown形式のテキスト。
+        :param text: Markdown-formatted text to translate.
+        :return: Translated Markdown-formatted text.
         """
         paragraphs = self._get_paragraphs(text)
         translated_paragraphs = []
@@ -34,54 +32,66 @@ class Translator:
             translated_paragraphs.append(translated)
         return "\n\n".join(translated_paragraphs)
 
-    # contextはlist[str]という形式で, 1つのパラグラフを1つの要素とするリスト形式にしてください AI!
-    def _translate_paragraph(self, target: str, context: str) -> str:
+    def _translate_paragraph(self, target: str, context: list[str], num_retry: int = 3) -> str:
         """
-        個々の段落を翻訳する内部メソッド。対象段落とその周囲のコンテキストを考慮して翻訳を行う。
+        Internal method to translate an individual paragraph, considering its surrounding context.
 
-        :param target: 翻訳対象の段落。
-        :param context: 翻訳対象の段落の前後の段落。
-        :return: 翻訳された段落。
+        :param target: Paragraph to translate.
+        :param context: List of surrounding paragraphs providing context.
+        :param num_retry: Number of retry attempts if the translation does not contain the special end token.
+        :return: Translated paragraph.
         """
-        # 特殊トークンを追加して段落の開始と終了を明示
         special_start = "<TRANSLATE_START>"
         special_end = "<TRANSLATE_END>"
-        # contextの各パラグラフにもspecial_start, special_endを与えてください.
-        # プロンプトは日本語で与えてください。 AI!
-        prompt = f"{context}\n\n{special_start}\n{target}\n{special_end}\n\nTranslate the above paragraph into Japanese while preserving Markdown formatting."
-
-        inputs = self.tokenizer(
-            prompt,
-            return_tensors="pt",
-            truncation=True,
-            max_length=self.max_context_length,
+        formatted_context = "\n\n".join([f"{special_start}\n{para}\n{special_end}" for para in context])
+        prompt = (
+            f"{formatted_context}\n\n{special_start}\n{target}\n{special_end}\n\n"
+            "上記の段落をMarkdownのフォーマットを保持しつつ日本語に翻訳してください."
         )
-        # special_endで生成が停止するようにしてください. AI!
-        # special_endが存在しない場合retryできるようにしてください. retry回数はnum_retry=3という引数で与えてください. AI!
-        outputs = self.model.generate(**inputs)
-        translation = self.tokenizer.decode(outputs[0], skip_special_tokens=True)
+
+        eos_token_id = self.tokenizer.encode(special_end, add_special_tokens=False)[-1]
+
+        for attempt in range(num_retry):
+            inputs = self.tokenizer(
+                prompt,
+                return_tensors="pt",
+                truncation=True,
+                max_length=self.max_context_length,
+            )
+            outputs = self.model.generate(
+                **inputs,
+                eos_token_id=eos_token_id
+            )
+            translation = self.tokenizer.decode(outputs[0], skip_special_tokens=True)
+            if special_end in translation:
+                translation = translation.split(special_end)[0] + special_end
+                return translation
+            else:
+                if attempt < num_retry - 1:
+                    continue
+                else:
+                    raise ValueError("Translation did not contain the special end token after multiple retries.")
         return translation
 
-    def _get_context(self, paragraphs: list, index: int, context_size: int = 2) -> str:
+    def _get_context(self, paragraphs: list, index: int) -> list[str]:
         """
-        指定されたインデックスの段落に対するコンテキストを取得する内部メソッド。前後の段落を結合して返す。
+        Retrieves the context for a specified paragraph index by collecting surrounding paragraphs.
 
-        :param paragraphs: 段落のリスト。
-        :param index: 翻訳対象の段落のインデックス。
-        :param context_size: 前後に取得する段落の数。
-        :return: 翻訳対象段落の前後の段落を含むコンテキスト。
+        :param paragraphs: List of all paragraphs.
+        :param index: Index of the target paragraph.
+        :return: List of surrounding paragraphs to be used as context.
         """
-        start = max(0, index - context_size)
+        start = max(0, index - self.num_context)
         end = index
         context_paragraphs = paragraphs[start:end]
-        return "\n\n".join(context_paragraphs)
+        return context_paragraphs
 
     def _get_paragraphs(self, text: str) -> list:
         """
-        Markdown形式のテキストを段落ごとに分割する内部メソッド。
+        Splits Markdown-formatted text into individual paragraphs.
 
-        :param text: Markdown形式のテキスト。
-        :return: 分割された段落のリスト。
+        :param text: Markdown-formatted text.
+        :return: List of paragraphs.
         """
         markdown = mistune.create_markdown(renderer=None)
         parsed = markdown(text)
@@ -94,27 +104,37 @@ class Translator:
 
     def get_statistics(self, text: str) -> dict:
         """
-        Markdownの段落の平均文字数、最大文字数などの基礎統計を取得するメソッド。
+        Retrieves basic statistics of the Markdown paragraphs, including average, maximum, and minimum lengths,
+        as well as statistics related to the translation requests considering the number of context paragraphs.
 
-        :param text: Markdown形式のテキスト。
-        :return: 統計情報を含む辞書。
+        :param text: Markdown-formatted text.
+        :return: Dictionary containing statistical information.
         """
         paragraphs = self._get_paragraphs(text)
         lengths = [len(p) for p in paragraphs]
-        # num_contextを考慮して1つのrequest (context:list[str], target_paragrah)についての平均, 最小, 最大の統計量も表示してください. AI!
+        total_requests = len(paragraphs)
+        context_counts = [len(self._get_context(paragraphs, idx)) for idx in range(total_requests)]
+        avg_context = sum(context_counts) / total_requests if total_requests else 0
+        max_context = max(context_counts) if total_requests else 0
+        min_context = min(context_counts) if total_requests else 0
         return {
             "average_length": sum(lengths) / len(lengths) if lengths else 0,
             "max_length": max(lengths) if lengths else 0,
             "min_length": min(lengths) if lengths else 0,
             "total_paragraphs": len(paragraphs),
+            "average_context_per_request": avg_context,
+            "max_context_per_request": max_context,
+            "min_context_per_request": min_context,
         }
 
-    def get_paragraph_statistics(self, paragraph: str) -> int:
+    def get_paragraph_statistics(self, paragraph: str) -> dict:
         """
-        個々の段落の基礎統計を取得するメソッド。
+        Retrieves basic statistics of an individual paragraph.
 
-        :param paragraph: 段落のテキスト。
-        :return:
+        :param paragraph: Text of the paragraph.
+        :return: Dictionary containing statistical information of the paragraph.
         """
         length = len(paragraph)
-        return length
+        return {
+            "length": length
+        }
