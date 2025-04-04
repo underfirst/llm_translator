@@ -46,24 +46,55 @@ markdown(text)
 
 ## API
 
-
-<!-- AI: 以下はLLMを用いたMarkdownの翻訳のためのAPI定義です. 実装に必要な詳細情報を追加してください. AI! -->
-
 モジュールはTranslatorクラスのメソッドとして実装する.
 Translatorクラスは以下のメソッドを持つ.
 
-- `Translator.__init__(self, model_name:str, max_context_length:int)`: コンストラクタ.
-- `Translator.translate(self, text: str) -> str`: Markdown全文を翻訳するメインモジュール.
-- `Translator._translate_paragraph(self, target, context) -> str`: 段落を翻訳するモジュール.
-  - target: 翻訳対象の段落.
-  - context: 翻訳対象の段落の前後の段落.
-- `Translator._get_context(self, paragraphs, index) -> str`: 翻訳対象の段落の前後の段落を取得するモジュール.
-  - paragraphs: 段落のリスト.
-  - index: 翻訳対象の段落のインデックス.
-- `Translator._get_paragraphs(self, text) -> list`: Markdownを段落ごとに分割するモジュール.
-  - text: Markdown形式のテキスト.
-- `Translarator.get_statistics(self, text) -> None`: Markdownの段落の平均文字数, 最大文字数などの基礎統計を確認するためのモジュール.
-  - text: Markdown形式のテキスト.
-- `Translator.get_paragraph_statistics(self, paragraph:str)`: 段落の基礎統計を取得するモジュール.
-  - paragraph: 段落のテキスト.
+- `Translator.__init__(self, model_name: str, max_context_length: int)`
+  - **説明**: Translatorクラスのコンストラクタ。使用するLLMモデルの名前と最大コンテキスト長を設定する。
+  - **パラメータ**:
+    - `model_name` (str): 使用するLLMモデルの名前。
+    - `max_context_length` (int): 翻訳時に保持するコンテキストの最大文字数。
 
+- `Translator.translate(self, text: str) -> str`
+  - **説明**: Markdown形式のテキスト全体を翻訳するメインメソッド。テキストを段落ごとに分割し、各段落を翻訳する。
+  - **パラメータ**:
+    - `text` (str): 翻訳対象のMarkdown形式のテキスト。
+  - **戻り値**:
+    - `str`: 翻訳後のMarkdown形式のテキスト。
+
+- `Translator._translate_paragraph(self, target: str, context: str) -> str`
+  - **説明**: 個々の段落を翻訳する内部メソッド。対象段落とその周囲のコンテキストを考慮して翻訳を行う。
+  - **パラメータ**:
+    - `target` (str): 翻訳対象の段落。
+    - `context` (str): 翻訳対象の段落の前後の段落。
+  - **戻り値**:
+    - `str`: 翻訳された段落。
+
+- `Translator._get_context(self, paragraphs: list, index: int) -> str`
+  - **説明**: 指定されたインデックスの段落に対するコンテキストを取得する内部メソッド。前後の段落を結合して返す。
+  - **パラメータ**:
+    - `paragraphs` (list): 段落のリスト。
+    - `index` (int): 翻訳対象の段落のインデックス。
+  - **戻り値**:
+    - `str`: 翻訳対象段落の前後の段落を含むコンテキスト。
+
+- `Translator._get_paragraphs(self, text: str) -> list`
+  - **説明**: Markdown形式のテキストを段落ごとに分割する内部メソッド。
+  - **パラメータ**:
+    - `text` (str): Markdown形式のテキスト。
+  - **戻り値**:
+    - `list`: 分割された段落のリスト。
+
+- `Translator.get_statistics(self, text: str) -> dict`
+  - **説明**: Markdownの段落の平均文字数、最大文字数などの基礎統計を取得するメソッド。
+  - **パラメータ**:
+    - `text` (str): Markdown形式のテキスト。
+  - **戻り値**:
+    - `dict`: 統計情報を含む辞書。
+
+- `Translator.get_paragraph_statistics(self, paragraph: str) -> dict`
+  - **説明**: 個々の段落の基礎統計を取得するメソッド。
+  - **パラメータ**:
+    - `paragraph` (str): 段落のテキスト。
+  - **戻り値**:
+    - `dict`: 段落の統計情報を含む辞書。
