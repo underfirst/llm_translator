@@ -1,6 +1,11 @@
 import mistune
-from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
+from transformers import AutoModelForSeq2SeqLM, AutoTokenizer
 
+
+# docstringはGoogle styleで書いてください. AI!
+# 句点は。ではなく.を使ってください AI!
+# 読点は、ではなく, (半角カンマスペース)を使ってください. AI!
+# num_contextはTranslator._get_paragraphsの引数のcontext_sizeではなく__init__ methodの引数として与えてください. AI!
 class Translator:
     def __init__(self, model_name: str, max_context_length: int = 1000):
         """
@@ -29,6 +34,7 @@ class Translator:
             translated_paragraphs.append(translated)
         return "\n\n".join(translated_paragraphs)
 
+    # contextはlist[str]という形式で, 1つのパラグラフを1つの要素とするリスト形式にしてください AI!
     def _translate_paragraph(self, target: str, context: str) -> str:
         """
         個々の段落を翻訳する内部メソッド。対象段落とその周囲のコンテキストを考慮して翻訳を行う。
@@ -40,9 +46,18 @@ class Translator:
         # 特殊トークンを追加して段落の開始と終了を明示
         special_start = "<TRANSLATE_START>"
         special_end = "<TRANSLATE_END>"
+        # contextの各パラグラフにもspecial_start, special_endを与えてください.
+        # プロンプトは日本語で与えてください。 AI!
         prompt = f"{context}\n\n{special_start}\n{target}\n{special_end}\n\nTranslate the above paragraph into Japanese while preserving Markdown formatting."
 
-        inputs = self.tokenizer(prompt, return_tensors="pt", truncation=True, max_length=self.max_context_length)
+        inputs = self.tokenizer(
+            prompt,
+            return_tensors="pt",
+            truncation=True,
+            max_length=self.max_context_length,
+        )
+        # special_endで生成が停止するようにしてください. AI!
+        # special_endが存在しない場合retryできるようにしてください. retry回数はnum_retry=3という引数で与えてください. AI!
         outputs = self.model.generate(**inputs)
         translation = self.tokenizer.decode(outputs[0], skip_special_tokens=True)
         return translation
@@ -72,8 +87,8 @@ class Translator:
         parsed = markdown(text)
         paragraphs = []
         for block in parsed:
-            if block['type'] == 'paragraph':
-                paragraph = ''.join(child['raw'] for child in block['children'])
+            if block["type"] == "paragraph":
+                paragraph = "".join(child["raw"] for child in block["children"])
                 paragraphs.append(paragraph)
         return paragraphs
 
@@ -86,21 +101,20 @@ class Translator:
         """
         paragraphs = self._get_paragraphs(text)
         lengths = [len(p) for p in paragraphs]
+        # num_contextを考慮して1つのrequest (context:list[str], target_paragrah)についての平均, 最小, 最大の統計量も表示してください. AI!
         return {
-            'average_length': sum(lengths) / len(lengths) if lengths else 0,
-            'max_length': max(lengths) if lengths else 0,
-            'min_length': min(lengths) if lengths else 0,
-            'total_paragraphs': len(paragraphs)
+            "average_length": sum(lengths) / len(lengths) if lengths else 0,
+            "max_length": max(lengths) if lengths else 0,
+            "min_length": min(lengths) if lengths else 0,
+            "total_paragraphs": len(paragraphs),
         }
 
-    def get_paragraph_statistics(self, paragraph: str) -> dict:
+    def get_paragraph_statistics(self, paragraph: str) -> int:
         """
         個々の段落の基礎統計を取得するメソッド。
 
         :param paragraph: 段落のテキスト。
-        :return: 段落の統計情報を含む辞書。
+        :return:
         """
         length = len(paragraph)
-        return {
-            'length': length
-        }
+        return length
