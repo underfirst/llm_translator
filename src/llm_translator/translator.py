@@ -2,8 +2,11 @@ import mistune
 from transformers import AutoModelForSeq2SeqLM, AutoTokenizer
 
 
+# docstringはGoogleのdocstring スタイルに従ってください. AI!
 class Translator:
-    def __init__(self, model_name: str, max_context_length: int = 1000, num_context: int = 2):
+    def __init__(
+        self, model_name: str, max_context_length: int = 1000, num_context: int = 2
+    ):
         """
         Translator class constructor. Sets the name of the LLM model to use and the maximum context length.
 
@@ -32,7 +35,9 @@ class Translator:
             translated_paragraphs.append(translated)
         return "\n\n".join(translated_paragraphs)
 
-    def _translate_paragraph(self, target: str, context: list[str], num_retry: int = 3) -> str:
+    def _translate_paragraph(
+        self, target: str, context: list[str], num_retry: int = 3
+    ) -> str:
         """
         Internal method to translate an individual paragraph, considering its surrounding context.
 
@@ -43,7 +48,9 @@ class Translator:
         """
         special_start = "<TRANSLATE_START>"
         special_end = "<TRANSLATE_END>"
-        formatted_context = "\n\n".join([f"{special_start}\n{para}\n{special_end}" for para in context])
+        formatted_context = "\n\n".join(
+            [f"{special_start}\n{para}\n{special_end}" for para in context]
+        )
         prompt = (
             f"{formatted_context}\n\n{special_start}\n{target}\n{special_end}\n\n"
             "上記の段落をMarkdownのフォーマットを保持しつつ日本語に翻訳してください."
@@ -58,10 +65,7 @@ class Translator:
                 truncation=True,
                 max_length=self.max_context_length,
             )
-            outputs = self.model.generate(
-                **inputs,
-                eos_token_id=eos_token_id
-            )
+            outputs = self.model.generate(**inputs, eos_token_id=eos_token_id)
             translation = self.tokenizer.decode(outputs[0], skip_special_tokens=True)
             if special_end in translation:
                 translation = translation.split(special_end)[0] + special_end
@@ -70,7 +74,9 @@ class Translator:
                 if attempt < num_retry - 1:
                     continue
                 else:
-                    raise ValueError("Translation did not contain the special end token after multiple retries.")
+                    raise ValueError(
+                        "Translation did not contain the special end token after multiple retries."
+                    )
         return translation
 
     def _get_context(self, paragraphs: list, index: int) -> list[str]:
@@ -113,7 +119,9 @@ class Translator:
         paragraphs = self._get_paragraphs(text)
         lengths = [len(p) for p in paragraphs]
         total_requests = len(paragraphs)
-        context_counts = [len(self._get_context(paragraphs, idx)) for idx in range(total_requests)]
+        context_counts = [
+            len(self._get_context(paragraphs, idx)) for idx in range(total_requests)
+        ]
         avg_context = sum(context_counts) / total_requests if total_requests else 0
         max_context = max(context_counts) if total_requests else 0
         min_context = min(context_counts) if total_requests else 0
@@ -135,6 +143,4 @@ class Translator:
         :return: Dictionary containing statistical information of the paragraph.
         """
         length = len(paragraph)
-        return {
-            "length": length
-        }
+        return {"length": length}
