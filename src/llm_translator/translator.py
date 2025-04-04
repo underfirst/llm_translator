@@ -132,8 +132,7 @@ class Translator:
             dict: Dictionary containing statistical information.
         """
         paragraphs = self._get_paragraphs(text)
-        # パラグラフのlengthはtokenizerにかけたtoken数で計算してください. AI!
-        lengths = [len(p) for p in paragraphs]
+        lengths = [len(self.tokenizer(p)["input_ids"]) for p in paragraphs]
         total_requests = len(paragraphs)
         context_counts = [
             len(self._get_context(paragraphs, idx)) for idx in range(total_requests)
