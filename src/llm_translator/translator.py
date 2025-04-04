@@ -2,17 +2,17 @@ import mistune
 from transformers import AutoModelForSeq2SeqLM, AutoTokenizer
 
 
-# docstringはGoogleのdocstring スタイルに従ってください. AI!
 class Translator:
     def __init__(
         self, model_name: str, max_context_length: int = 1000, num_context: int = 2
     ):
         """
-        Translator class constructor. Sets the name of the LLM model to use and the maximum context length.
+        Translator class constructor.
 
-        :param model_name: Name of the LLM model to use.
-        :param max_context_length: Maximum number of characters to maintain as context during translation.
-        :param num_context: Number of surrounding paragraphs to include as context for each translation request.
+        Args:
+            model_name (str): Name of the LLM model to use.
+            max_context_length (int, optional): Maximum number of characters to maintain as context during translation. Defaults to 1000.
+            num_context (int, optional): Number of surrounding paragraphs to include as context for each translation request. Defaults to 2.
         """
         self.model_name = model_name
         self.max_context_length = max_context_length
@@ -24,8 +24,11 @@ class Translator:
         """
         Main method to translate an entire Markdown-formatted text. Splits the text into paragraphs and translates each one.
 
-        :param text: Markdown-formatted text to translate.
-        :return: Translated Markdown-formatted text.
+        Args:
+            text (str): Markdown-formatted text to translate.
+
+        Returns:
+            str: Translated Markdown-formatted text.
         """
         paragraphs = self._get_paragraphs(text)
         translated_paragraphs = []
@@ -41,10 +44,13 @@ class Translator:
         """
         Internal method to translate an individual paragraph, considering its surrounding context.
 
-        :param target: Paragraph to translate.
-        :param context: List of surrounding paragraphs providing context.
-        :param num_retry: Number of retry attempts if the translation does not contain the special end token.
-        :return: Translated paragraph.
+        Args:
+            target (str): Paragraph to translate.
+            context (list[str]): List of surrounding paragraphs providing context.
+            num_retry (int, optional): Number of retry attempts if the translation does not contain the special end token. Defaults to 3.
+
+        Returns:
+            str: Translated paragraph.
         """
         special_start = "<TRANSLATE_START>"
         special_end = "<TRANSLATE_END>"
@@ -83,9 +89,12 @@ class Translator:
         """
         Retrieves the context for a specified paragraph index by collecting surrounding paragraphs.
 
-        :param paragraphs: List of all paragraphs.
-        :param index: Index of the target paragraph.
-        :return: List of surrounding paragraphs to be used as context.
+        Args:
+            paragraphs (list): List of all paragraphs.
+            index (int): Index of the target paragraph.
+
+        Returns:
+            list[str]: List of surrounding paragraphs to be used as context.
         """
         start = max(0, index - self.num_context)
         end = index
@@ -96,8 +105,11 @@ class Translator:
         """
         Splits Markdown-formatted text into individual paragraphs.
 
-        :param text: Markdown-formatted text.
-        :return: List of paragraphs.
+        Args:
+            text (str): Markdown-formatted text.
+
+        Returns:
+            list: List of paragraphs.
         """
         markdown = mistune.create_markdown(renderer=None)
         parsed = markdown(text)
@@ -113,8 +125,11 @@ class Translator:
         Retrieves basic statistics of the Markdown paragraphs, including average, maximum, and minimum lengths,
         as well as statistics related to the translation requests considering the number of context paragraphs.
 
-        :param text: Markdown-formatted text.
-        :return: Dictionary containing statistical information.
+        Args:
+            text (str): Markdown-formatted text.
+
+        Returns:
+            dict: Dictionary containing statistical information.
         """
         paragraphs = self._get_paragraphs(text)
         lengths = [len(p) for p in paragraphs]
@@ -139,8 +154,11 @@ class Translator:
         """
         Retrieves basic statistics of an individual paragraph.
 
-        :param paragraph: Text of the paragraph.
-        :return: Dictionary containing statistical information of the paragraph.
+        Args:
+            paragraph (str): Text of the paragraph.
+
+        Returns:
+            dict: Dictionary containing statistical information of the paragraph.
         """
         length = len(paragraph)
         return {"length": length}
