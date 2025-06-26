@@ -243,20 +243,21 @@ app = Typer()
 
 
 @app.command()
-def translate(
-    paper_path: str = "paper.md",
-):
+def translate(paper_path: str):
     """
     Translate the given paper.
     """
-    paper_path = Path(paper_path)
-    paper = paper_path.read_text()
+    path = Path(paper_path)
+    if not path.exists():
+        print(f"Paper path {paper_path} does not exist.")
+        return
+    text = path.read_text()
     callback = UsageMetadataCallbackHandler()
-    ret = translator.invoke({"original_text": paper, "callbacks": [callback]})
+    ret = translator.invoke({"original_text": text, "callbacks": [callback]})
     ret = TranslatorState(**ret)
     print(callback.usage_metadata)
     paper_ja = "\n\n".join([passage.translated for passage in ret.passages])
-    paper_ja_path = paper_path.parent / f"{paper_path.name.replace('.md', '_ja.md')}"
+    paper_ja_path = path.parent / f"{path.name.replace('.md', '_ja.md')}"
     paper_ja_path.write_text(paper_ja)
 
 

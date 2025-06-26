@@ -28,3 +28,133 @@ dev = [
   "pytest>=8.3.5",
   "ruff>=0.11.2",
 ]
+
+[tool.ruff]
+
+# TODO: overwrite.
+#src = ["src", "test"]  # Allow imports relative to the "src" and "test" directories.
+target-version = "py311"
+line-length = 120
+exclude = [
+  ".bzr",
+  ".direnv",
+  ".eggs",
+  ".git",
+  ".git-rewrite",
+  ".hg",
+  ".ipynb_checkpoints",
+  ".mypy_cache",
+  ".nox",
+  ".pants.d",
+  ".pyenv",
+  ".pytest_cache",
+  ".pytype",
+  ".ruff_cache",
+  ".svn",
+  ".tox",
+  ".venv",
+  ".vscode",
+  "__pypackages__",
+  "_build",
+  "buck-out",
+  "build",
+  "dist",
+  "node_modules",
+  "site-packages",
+  "venv",
+  # BEGIN: user defined.
+  # TODO: overrite.
+  "add/path/to/ignore/",
+]
+select = [
+  "A",
+  "ARG",
+  "B",
+  "C",
+  "DTZ",
+  "E",
+  "EM",
+  "F",
+  "FBT",
+  "I",
+  "ICN",
+  "ISC",
+  "N",
+  "PLC",
+  "PLE",
+  "PLR",
+  "PLW",
+  "Q",
+  "RUF",
+  "S",
+  "T",
+  "TID",
+  "UP",
+  "W",
+  "YTT",
+  "PTH",
+  "ANN",
+  #"PT",  # Pytest style.
+]
+ignore = [
+  # Allow non-abstract empty methods in abstract base classes
+  "B027",
+  # Allow boolean positional values in function calls, like `dict.get(... True)`
+  "FBT003",
+  # Ignore checks for possible passwords
+  "S105",
+  "S106",
+  "S107",
+  # Ignore complexity
+  "C901",
+  "PLR0911",
+  "PLR0912",
+  "PLR0913",
+  "PLR0915",
+  # User defined.
+  # Allow using same variable in for loop.
+  "PLW2901",
+  # Allow assert.
+  "S101",
+  # Allow using requests without timeout params.
+  "S113",
+  # Allow magic numbers.
+  "PLR2004",
+  # Allow raising Error inside except clause.
+  "B904",
+  # Allow using bool parameters.
+  "FBT002",
+  "FBT001",
+  # Allow using `id` as variable name.
+  "A001",
+  "A002",
+  # Allow function call in argument default.
+  "B008",
+  # Allow x == None (bcz SQLAlchemy use this).
+  "E711",
+  # Allow open(filepath).
+  "PTH123",
+  # Annotations
+  "ANN002",
+  "ANN003",
+  "ANN101",
+  "ANN202",
+  "ANN204",
+  # TODO: overwrite if necessary.
+]
+unfixable = [
+  # Don't touch unused imports
+  "F401",
+]
+
+[tool.ruff.isort]
+# TODO: overwrite.
+known-first-party = [""]
+
+[tool.ruff.flake8-tidy-imports]
+ban-relative-imports = "all"
+
+[tool.ruff.per-file-ignores]
+# TODO: overwrite if neccessary.
+# Tests can use magic values, assertions, and relative imports
+"tests/**/*" = ["PLR2004", "S101", "TID252"]
