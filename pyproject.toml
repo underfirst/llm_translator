@@ -19,7 +19,7 @@ dependencies = [
 ]
 
 [project.scripts]
-llm-translator = "llm_translator:main"
+llmt = "llm_translator.cli.main:app"
 
 [build-system]
 requires = ["hatchling"]
